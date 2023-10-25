@@ -1,11 +1,10 @@
 import cv2
 import os
 import numpy as np
-import keras_ocr
+import easyocr
 import datetime
 import time
 from copy import deepcopy
-import keras_ocr
 
 class vidtofrm:
 
@@ -14,7 +13,7 @@ class vidtofrm:
 ## every      :
     def __init__(self, video_path, batch_size, every):
         # objects for keras_ocr and video reader
-        self.pipeline = keras_ocr.pipeline.Pipeline()
+        self.pipeline = easyocr.Reader(['en'], gpu=True)
         self.vr = cv2.VideoCapture(video_path)
         
         # get the first keras_ocr prediction in each batches
@@ -43,36 +42,35 @@ class vidtofrm:
         return mse
 
     def removal(self, prediction, frame):
-        mask = np.zeros(frame.shape[:2], dtype="uint8")
         processed_img = deepcopy(frame)
 
-        for box in prediction[0]:
-            
-            x0, y0 = box[1][0]
-            x1, y1 = box[1][1] 
-            x2, y2 = box[1][2]
-            x3, y3 = box[1][3] 
-            
+        for box in prediction:
+            val = box
+            for i in range(int(val[0][0][0]//1), int(val[0][2][0])//1):
+                for j in range(int(val[0][0][1]//1), int(val[0][2][1]//1)):
+                    processed_img[j][i] = (255,255,255)
 
-            x_mid0, y_mid0 = self.midpoint(x1, y1, x2, y2)
-            x_mid1, y_mi1 = self.midpoint(x0, y0, x3, y3)
-            
-            thickness = int(np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 ))
-            
-            cv2.line(mask, (x_mid0, y_mid0), (x_mid1, y_mi1), 255, thickness)
-            processed_img = cv2.inpaint(processed_img, mask, 0, cv2.INPAINT_TELEA)
-        
         return processed_img
 
     def extframes(self):
         count = 0
+        preFrame = None
         prediction_groups = None
+        prePrediction = None
         for i in range(0, int(self.vr.get(cv2.CAP_PROP_FRAME_COUNT))):
             success, frame = self.vr.read()
+            
             if i % self.every == 0:
-                if count == 0 or count % self.batch_size == 0 :
-                    prediction_groups = self.pipeline.recognize([frame])    
-
+                preFrame = deepcopy(frame)
+                result = self.mse(preFrame,frame)
+                if count == 0 or result > 30 or count % self.batch_size == 0 :
+                    prediction_groups = self.pipeline.readtext(frame)
+                    prePrediction = deepcopy(prediction_groups)
+                    if result < 30 and count != 0:
+                        prediction_groups = prediction_groups + prePrediction 
+                    prePrediction = deepcopy(prediction_groups)
+                    print(i)
+                
                 img = self.removal(prediction_groups, frame)
                 self.img_array.append(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
