@@ -4,8 +4,8 @@ import time
 
 start = time.time()
 
-batch_size = 10
-every = 10
+batch_size = 2
+every = 5
 
 vid = vidtofrm("test.avi", batch_size, every)
 vid.extframes()

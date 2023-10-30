@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 import easyocr
+# import keras_ocr
 import datetime
 import time
 from copy import deepcopy
@@ -13,7 +14,8 @@ class vidtofrm:
 ## every      :
     def __init__(self, video_path, batch_size, every):
         # objects for keras_ocr and video reader
-        self.pipeline = easyocr.Reader(['en'], gpu=True)
+        self.pipeline = easyocr.Reader(['en'], gpu=False)
+        # self.pipeline = keras_ocr.pipeline.Pipeline()
         self.vr = cv2.VideoCapture(video_path)
         
         # get the first keras_ocr prediction in each batches
@@ -43,9 +45,9 @@ class vidtofrm:
 
     def removal(self, prediction, frame):
         processed_img = deepcopy(frame)
-
         for box in prediction:
             val = box
+        
             for i in range(int(val[0][0][0]//1), int(val[0][2][0])//1):
                 for j in range(int(val[0][0][1]//1), int(val[0][2][1]//1)):
                     processed_img[j][i] = (255,255,255)
@@ -54,23 +56,16 @@ class vidtofrm:
 
     def extframes(self):
         count = 0
-        preFrame = None
         prediction_groups = None
-        prePrediction = None
         for i in range(0, int(self.vr.get(cv2.CAP_PROP_FRAME_COUNT))):
             success, frame = self.vr.read()
             
             if i % self.every == 0:
-                preFrame = deepcopy(frame)
-                result = self.mse(preFrame,frame)
-                if count == 0 or result > 30 or count % self.batch_size == 0 :
+
+
+                if count == 0 or count % self.batch_size == 0 :
                     prediction_groups = self.pipeline.readtext(frame)
-                    prePrediction = deepcopy(prediction_groups)
-                    if result < 30 and count != 0:
-                        prediction_groups = prediction_groups + prePrediction 
-                    prePrediction = deepcopy(prediction_groups)
-                    print(i)
-                
+
                 img = self.removal(prediction_groups, frame)
                 self.img_array.append(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
