@@ -1,8 +1,6 @@
 name: vidtofrm
 channels:
-  - r
   - conda-forge
-  - bioconda
   - defaults
 dependencies:
   - _libgcc_mutex=0.1
