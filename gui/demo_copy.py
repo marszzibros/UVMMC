@@ -1,7 +1,26 @@
 from vedo import *
 import os
 import math
-# import dicom2nifti
+from pynput import mouse
+
+
+pressed = None
+button_key = None
+
+def on_click(x, y, button, pressed_key):
+    global pressed
+    pressed = pressed_key
+    
+    global button_key
+    if button == mouse.Button.left:
+        button_key = "left"
+    elif button == mouse.Button.right:
+        button_key = "right"
+
+listener = mouse.Listener(
+    on_click=on_click)
+listener.start()
+
 
 # Function for x button
 def buttonfunc_x():
@@ -81,18 +100,20 @@ def buttonfunc_r():
 # Function for g button
 def buttonfunc_g():
 
+    global cam_distance
+
     loc = box.GetPosition()
     pos = plt.at(2).camera.GetPosition()
     foc = plt.at(2).camera.GetFocalPoint()
 
-    sin_rad_alpha = (pos[0] - foc[0]) / distance
-    sin_rad_beta = (pos[2] - foc[2]) / distance
+    sin_rad_alpha = (pos[0] - foc[0]) / cam_distance
+    sin_rad_beta = (pos[2] - foc[2]) / cam_distance
 
     os.system(f"python example_projector.py {ct_name} {loc[2] - center[2]} {loc[0] - center[0]} {loc[1] - center[1]} {math.asin(sin_rad_alpha)} {math.asin(sin_rad_beta)}")
     plt.at(3).show(Picture("example_projector.png"),axes=0, zoom=1.5)
 
-# Wheel function
-def func_wheelfor(evt):
+
+def move(evt):
 
     """
     if a or A is pressed
@@ -110,130 +131,104 @@ def func_wheelfor(evt):
     """
     pos = plt.at(2).camera.GetPosition()
     foc = plt.at(2).camera.GetFocalPoint()
+    
+    global pressed
+    global cam_distance
+    global cyl_distance
 
-    if evt.keypress == "a" or evt.keypress == "A": 
+    box_loc = box.pos()
 
-        box_loc = box.pos()
+    print(box_loc)
+    
+    if pressed and button_key == "left" and abs(evt.delta2d[0]) < abs(evt.delta2d[1]):
 
-        if foc[0] > pos[0] or abs(pos[0] - foc[0]) < distance - 50:
+        if evt.delta2d[1] > 0:
 
-            """
-            pos: (x1, y1)
-            foc: (x1 - 10, y2)
-            """
-            foc_new = pos[1] - math.sqrt(distance ** 2 - (20) ** 2)
-            plt.at(2).camera.SetFocalPoint([foc[0] - 20, foc_new, foc[2]])
+            if box_loc [2] - 10 < z1:
+                box.z(box_loc[2] - 10)
+                plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] - 10])
+                plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] - 10])
+        else:
+    
+            if box_loc [2] + 10 > z0:
+                box.z(box_loc[2] + 10)
+                plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] + 10])
+                plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] + 10])        
+                
+            
+    elif pressed and button_key == "left" and abs(evt.delta2d[0]) > abs(evt.delta2d[1]):
 
-            box.orientation([pos[0] - foc[0] + 20, pos[1] - foc_new, pos[2] - foc[2]])
+        if evt.delta2d[0] > 0:
+            if box_loc [0] + 10 < x1:
+                box.x(box_loc[0] + 10)
+                plt.at(2).camera.SetFocalPoint([foc[0] + 10, foc[1], foc[2]])
+                plt.at(2).camera.SetPosition([pos[0] + 10, pos[1], pos[2]])    
+            
+        else:
+            if box_loc [0] - 10 > x0:
+                box.x(box_loc[0] - 10)
+                plt.at(2).camera.SetFocalPoint([foc[0] - 10, foc[1], foc[2]])
+                plt.at(2).camera.SetPosition([pos[0] - 10, pos[1], pos [2]])       
+    
+    elif pressed and button_key == "right" and abs(evt.delta2d[0]) > abs(evt.delta2d[1]):
 
-    elif evt.keypress == "b" or evt.keypress == "B": 
+        a_box_x = box_loc[0] - foc[0]
 
-        box_loc = box.pos()
+        # direction check
+        if evt.delta2d[0] > 0 and (pos[0] - foc[0]) / cam_distance < 0.2:
+            a_box_x = box_loc[0] - foc[0] + 5
+        elif evt.delta2d[0] < 0 and (pos[0] - foc[0]) / cam_distance > -0.2:
+            a_box_x = box_loc[0] - foc[0] - 5
 
+        # cylinder calculation
+        a_box_y = foc[1] + math.sqrt(cyl_distance ** 2 - a_box_x ** 2)
 
-        if foc[2] < pos[2] or abs(pos[2] - foc[2]) < distance - 50:
+        box.x(a_box_x + foc[0])
+        box.y(a_box_y)
 
-            """
-            pos: (x1, y1)
-            foc: (x1 - 10, y2)
-            """
-            foc_new = pos[1] - math.sqrt(distance ** 2 - (20) ** 2)
-            plt.at(2).camera.SetFocalPoint([foc[0], foc_new, foc[2] + 20])
+        # camera calculation
+        cos_tri = a_box_x / a_box_y
+        a_cam_x = cos_tri * cam_distance
+        a_cam_y = foc[1] + math.sqrt(cam_distance ** 2 - a_cam_x ** 2)
 
-            box.orientation([pos[0] - foc[0], pos[1] - foc_new, pos[2] - foc[2] - 20])
+        plt.at(2).camera.SetPosition([a_cam_x + foc[0], a_cam_y, pos[2]])       
+        pos = [a_cam_x + foc[0], a_cam_y, pos[2]]
 
-    elif evt.keypress == "y" or evt.keypress == "Y":
-        box_loc = box.pos()
+        box.orientation([pos[0] - foc[0], pos[1] - foc[1], pos[2] - foc[2]])
 
-        if box_loc [2] + 20 < z1:
-            box.z(box_loc[2] + 20)
-            plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] + 20])
-            plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] + 20])    
-    elif evt.keypress == "x" or evt.keypress == "X":
-        box_loc = box.pos()
+    elif pressed and button_key == "right" and abs(evt.delta2d[0]) < abs(evt.delta2d[1]):
 
-        if box_loc [0] + 20 < x1:
-            box.x(box_loc[0] + 20)
-            plt.at(2).camera.SetFocalPoint([foc[0] + 20, foc[1], foc[2]])
-            plt.at(2).camera.SetPosition([pos[0] + 20, pos[1], pos[2]])    
+        a_box_z = box_loc[2] - foc[2]
+
+        # direction check
+        if evt.delta2d[1] > 0 and (pos[2] - foc[2]) / cam_distance < 0.2:
+            a_box_z = a_box_z + 5
+        elif evt.delta2d[1] < 0 and (pos[2] - foc[2]) / cam_distance > -0.2:
+            a_box_z = a_box_z - 5
+
+        # cylinder calculation
+        a_box_y = foc[1] + math.sqrt(cyl_distance ** 2 - a_box_z ** 2)
+
+        box.z(a_box_z + foc[2])
+        box.y(a_box_y)
+
+        # camera calculation
+        cos_tri = a_box_z / a_box_y
+        a_cam_z = cos_tri * cam_distance
+        a_cam_y = foc[1] + math.sqrt(cam_distance ** 2 - a_cam_z ** 2)
+
+        plt.at(2).camera.SetPosition([pos[0], a_cam_y, a_cam_z + foc[2]])       
+        pos = [pos[0], a_cam_y, a_cam_z + foc[2]]
+
+        box.orientation([pos[0] - foc[0], pos[1] - foc[1], pos[2] - foc[2]])
     loc = box.GetPosition()
-    sin_rad_alpha = (pos[0] - foc[0]) / distance
-    sin_rad_beta = (pos[2] - foc[2]) / distance
+
+    sin_rad_alpha = (pos[0] - foc[0]) / cam_distance
+    sin_rad_beta = (pos[2] - foc[2]) / cam_distance
 
     print(f"({loc[2] - center[2]}, {loc[0] - center[0]}, {loc[1] - center[1]}, {math.asin(sin_rad_alpha)}, {math.asin(sin_rad_beta)})")
     plt.render()
-def func_wheelback(evt):
 
-    """
-    if a or A is pressed
-    alpha value will be changed - no positional changes; only cylinder's axis change
-
-    if b or B is pressed
-    beta value will be changed - no positional changes; only cylinder's axis change
-
-    if x or X is pressed
-    x value will be changed; left-to-right positional changes        
-
-    if y or Y is pressed
-    z value will be changed; top-to-bottom positional changes
-
-    """
-
-    pos = plt.at(2).camera.GetPosition()
-    foc = plt.at(2).camera.GetFocalPoint()
-
-    if evt.keypress == "a" or evt.keypress == "A": 
-
-        box_loc = box.pos()
-
-        if foc[0] < pos[0] or abs(pos[0] - foc[0]) < distance - 50:
-
-            """
-            pos: (x1, y1)
-            foc: (x1 - 10, y2)
-            """
-            foc_new = pos[1] - math.sqrt(distance ** 2 - (20) ** 2)
-            plt.at(2).camera.SetFocalPoint([foc[0] + 20, foc_new, foc[2]])
-
-            box.orientation([pos[0] - foc[0] - 20, pos[1] - foc_new, pos[2] - foc[2]])
-
-    elif evt.keypress == "b" or evt.keypress == "B": 
-
-        box_loc = box.pos()
-
-
-        if foc[2] > pos[2] or abs(pos[2] - foc[2]) < distance - 50:
-
-            """
-            pos: (x1, y1)
-            foc: (x1 - 10, y2)
-            """
-            foc_new = pos[1] - math.sqrt(distance ** 2 - (20) ** 2)
-            plt.at(2).camera.SetFocalPoint([foc[0], foc_new, foc[2] - 20])
-
-            box.orientation([pos[0] - foc[0], pos[1] - foc_new, pos[2] - foc[2] + 20])
-
-    elif evt.keypress == "y" or evt.keypress == "Y":
-        box_loc = box.pos()
-        if box_loc [2] - 20 > z0:
-            box.z(box_loc[2] - 20)
-            plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] - 20])
-            plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] - 20])    
-
-    elif evt.keypress == "x" or evt.keypress == "X":
-        box_loc = box.pos()
-
-        if box_loc [0] - 20 > x0:
-            box.x(box_loc[0] - 20)
-            plt.at(2).camera.SetFocalPoint([foc[0] - 20, foc[1], foc[2]])
-            plt.at(2).camera.SetPosition([pos[0] - 20, pos[1], pos [2]])       
-
-    loc = box.GetPosition()
-    sin_rad_alpha = (pos[0] - foc[0]) / distance
-    sin_rad_beta = (pos[2] - foc[2]) / distance
-
-    print(f"({loc[2] - center[2]}, {loc[0] - center[0]}, {loc[1] - center[1]}, {math.asin(sin_rad_alpha)}, {math.asin(sin_rad_beta)})")
-    plt.render()
 shape = [
     dict(bottomleft=(0,0), topright=(1,1), bg='k7'), # the full empty window
     dict(bottomleft=(0.01,0.6), topright=(0.65,0.99), bg='w'), # the display window
@@ -256,7 +251,6 @@ center = [(x1 - x0) / 2, (y1 - y0) / 2 , (z1 - z0) / 2]
 cam_high = [(x1 - x0) / 2, (y1 - y0)/1.1, (z1 - z0) / 2]
 cam_side = [-(x1 - x0), (y1 - y0) * 2, (z1 - z0) / 2]
 
-distance = sqrt((cam_high[0] - center[0]) ** 2 + (cam_high[1] - 0) ** 2 + (cam_high[2] - center[2]) ** 2)
 click = False
 box = Cylinder(pos = (cam_high[0], cam_high[1], cam_high[2]),
           r = 75,
@@ -273,12 +267,15 @@ plt.at(1).camera.Zoom(1.5)
 
 plt.at(2).look_at("xz").show(ct, roll = 180, mode = "image")
 
-temp_foc = plt.at(2).camera.GetFocalPoint()
 temp_pos = plt.at(2).camera.GetPosition()
 
-
 plt.at(2).camera.SetFocalPoint(center[0], center[1], center[2])
-plt.at(2).camera.SetPosition(temp_pos[0], - temp_pos[1], temp_pos[2])
+plt.at(2).camera.SetPosition(center[0], - temp_pos[1], center[2])
+
+cam_distance = -temp_pos[1] - center[1]
+cyl_distance = box.pos()[1] - center[1]
+
+
 plt.at(2).camera.Zoom(3)
 
 
@@ -354,15 +351,13 @@ bu7 = plt.at(0).add_button(
 
 )
 
+plt.remove_callback("mouse move")
+plt.remove_callback("keyboard")
+
+plt.add_callback("mouse move", move)
+
+
 bu3.switch()
-plt.remove_callback('MouseWheelForward')
-plt.remove_callback('MouseWheelBackward')
-plt.remove_callback('KeyPress')
-plt.at(0).remove_callback('KeyPress')
-plt.at(1).remove_callback('KeyPress')
-plt.at(2).remove_callback('KeyPress')
-plt.add_callback('MouseWheelForward',func_wheelfor)
-plt.add_callback('MouseWheelBackward',func_wheelback)
 
 
 
