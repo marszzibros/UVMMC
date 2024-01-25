@@ -2,7 +2,24 @@ from vedo import *
 import os
 import math
 from pynput import mouse
+import random
+import datetime
+import rest_api_write
+import threading
 
+def send_post_threaded(*args):
+    # Define a function to be executed in a separate thread
+    def send_post_task():
+        rest_api_write.send_post(*args)
+
+    # Create a new thread and start it
+    thread = threading.Thread(target=send_post_task)
+    thread.start()
+
+x = datetime.datetime.now()
+ct_name = "THIN_ST_TORSO"
+group_id = f"{ct_name}_{x.timestamp()}_{random.randint(0,1000)}"
+order = 1
 
 pressed = None
 button_key = None
@@ -129,6 +146,7 @@ def move(evt):
     z value will be changed; top-to-bottom positional changes
 
     """
+    moved=False
     pos = plt.at(2).camera.GetPosition()
     foc = plt.at(2).camera.GetFocalPoint()
     
@@ -138,37 +156,39 @@ def move(evt):
 
     box_loc = box.pos()
 
-    print(box_loc)
-    
-    if pressed and button_key == "left" and abs(evt.delta2d[0]) < abs(evt.delta2d[1]):
-
-        if evt.delta2d[1] > 0:
-
-            if box_loc [2] - 10 < z1:
-                box.z(box_loc[2] - 10)
-                plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] - 10])
-                plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] - 10])
-        else:
-    
-            if box_loc [2] + 10 > z0:
-                box.z(box_loc[2] + 10)
-                plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] + 10])
-                plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] + 10])        
-                
-            
-    elif pressed and button_key == "left" and abs(evt.delta2d[0]) > abs(evt.delta2d[1]):
+    if pressed and button_key == "left" and abs(evt.delta2d[0]) > abs(evt.delta2d[1]):
 
         if evt.delta2d[0] > 0:
+
+            if box_loc [2] + 10 < z1:
+                box.z(box_loc[2] + 10)
+                plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] + 10])
+                plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] + 10])
+                moved=True
+        else:
+    
+            if box_loc [2] - 10 > z0:
+                box.z(box_loc[2] - 10)
+                plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] - 10])
+                plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] - 10])        
+                moved=True
+                
+            
+    elif pressed and button_key == "left" and abs(evt.delta2d[0]) < abs(evt.delta2d[1]):
+
+        if evt.delta2d[1] > 0:
             if box_loc [0] + 10 < x1:
                 box.x(box_loc[0] + 10)
                 plt.at(2).camera.SetFocalPoint([foc[0] + 10, foc[1], foc[2]])
                 plt.at(2).camera.SetPosition([pos[0] + 10, pos[1], pos[2]])    
+                moved=True
             
         else:
             if box_loc [0] - 10 > x0:
                 box.x(box_loc[0] - 10)
                 plt.at(2).camera.SetFocalPoint([foc[0] - 10, foc[1], foc[2]])
-                plt.at(2).camera.SetPosition([pos[0] - 10, pos[1], pos [2]])       
+                plt.at(2).camera.SetPosition([pos[0] - 10, pos[1], pos [2]])
+                moved=True       
     
     elif pressed and button_key == "right" and abs(evt.delta2d[0]) > abs(evt.delta2d[1]):
 
@@ -195,6 +215,7 @@ def move(evt):
         pos = [a_cam_x + foc[0], a_cam_y, pos[2]]
 
         box.orientation([pos[0] - foc[0], pos[1] - foc[1], pos[2] - foc[2]])
+        moved=True
 
     elif pressed and button_key == "right" and abs(evt.delta2d[0]) < abs(evt.delta2d[1]):
 
@@ -221,12 +242,15 @@ def move(evt):
         pos = [pos[0], a_cam_y, a_cam_z + foc[2]]
 
         box.orientation([pos[0] - foc[0], pos[1] - foc[1], pos[2] - foc[2]])
+        moved=True
     loc = box.GetPosition()
 
     sin_rad_alpha = (pos[0] - foc[0]) / cam_distance
     sin_rad_beta = (pos[2] - foc[2]) / cam_distance
-
-    print(f"({loc[2] - center[2]}, {loc[0] - center[0]}, {loc[1] - center[1]}, {math.asin(sin_rad_alpha)}, {math.asin(sin_rad_beta)})")
+    global order
+    if moved:
+        send_post_threaded(loc[2] - center[2], loc[0] - center[0], loc[1] - center[1], math.asin(sin_rad_alpha), math.asin(sin_rad_beta), order, ct_name, group_id)
+        order+=1
     plt.render()
 
 shape = [
@@ -240,7 +264,8 @@ shape = [
 settings.renderer_frame_width = 1
 settings.enable_default_keyboard_callbacks = False
 
-ct_name = "THIN_ST_TORSO"
+
+
 
 ct = Volume(f"{ct_name}.nii.gz")
 
@@ -248,8 +273,12 @@ ct = Volume(f"{ct_name}.nii.gz")
 x0, x1, y0, y1, z0, z1 = ct.bounds()
 
 center = [(x1 - x0) / 2, (y1 - y0) / 2 , (z1 - z0) / 2]
-cam_high = [(x1 - x0) / 2, (y1 - y0)/1.1, (z1 - z0) / 2]
+#cam_high = [(x1 - x0) / 2, (y1 - y0)/1.1, (z1 - z0) / 2]
+
+cam_high = [random.randint(0, x1 // 1),(y1 - y0)/1.1,random.randint(0, z1 // 1)]
+# center = [cam_high[0],(y1 - y0) / 2, cam_high[2]]
 cam_side = [-(x1 - x0), (y1 - y0) * 2, (z1 - z0) / 2]
+
 
 click = False
 box = Cylinder(pos = (cam_high[0], cam_high[1], cam_high[2]),
@@ -262,22 +291,22 @@ box = Cylinder(pos = (cam_high[0], cam_high[1], cam_high[2]),
 plt = Plotter(shape=shape, sharecam=False, size=(1050, 700))
 plt.at(1).show(Assembly([ct,box]),axes= 1, mode = "image")
 plt.at(1).look_at("xy")
-
+plt.at(1).camera.Azimuth(270)
+plt.at(1).camera.Elevation(45)
 plt.at(1).camera.Zoom(1.5)
 
 plt.at(2).look_at("xz").show(ct, roll = 180, mode = "image")
 
 temp_pos = plt.at(2).camera.GetPosition()
 
-plt.at(2).camera.SetFocalPoint(center[0], center[1], center[2])
-plt.at(2).camera.SetPosition(center[0], - temp_pos[1], center[2])
+plt.at(2).camera.SetFocalPoint(cam_high[0], center[1], cam_high[2])
+plt.at(2).camera.SetPosition(cam_high[0], - temp_pos[1], cam_high[2])
 
 cam_distance = -temp_pos[1] - center[1]
 cyl_distance = box.pos()[1] - center[1]
 
 
 plt.at(2).camera.Zoom(3)
-
 
 # Add a button to the plotter with buttonfunc as the callback function
 bu1 = plt.at(0).add_button(
@@ -330,8 +359,8 @@ bu6 = plt.at(0).add_button(
     buttonfunc_n,
     pos=(0.26, 0.01),   # x,y fraction from bottom left corner
     states=["n", "n"],  # text for each state
-    c=["w"],     # font color for each state
-    bc=["dg"],  # background color for each state
+    c=["w","w"],     # font color for each state
+    bc=["dg","dv"],  # background color for each state
     font="courier",   # font type
     size=20,          # font size
     bold=True,        # bold font
@@ -351,13 +380,14 @@ bu7 = plt.at(0).add_button(
 
 )
 
+
 plt.remove_callback("mouse move")
 plt.remove_callback("keyboard")
 
 plt.add_callback("mouse move", move)
 
 
-bu3.switch()
+bu6.switch()
 
 
 

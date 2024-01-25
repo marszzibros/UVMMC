@@ -7,7 +7,11 @@ from deepdrr.utils import test_utils, image_utils
 from deepdrr.projector import Projector
 import sys
 import numpy as np
+import time
+
+
 def main():
+    start = time.time()
     print("Generating")
     patient = deepdrr.Volume.from_nifti(
         sys.argv[1] + ".nii.gz", use_thresholding=True
@@ -27,6 +31,8 @@ def main():
     path = "example_projector.png"
     image_utils.save(path, image)
     print("Done")
+    end = time.time()
+    print(end - start)
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,8 @@
 from vedo import *
 import os
 import math
+import random
+
 # import dicom2nifti
 
 # Function for x button
@@ -252,9 +254,15 @@ ct = Volume(f"{ct_name}.nii.gz")
 # get the demension/shape of the ct scans
 x0, x1, y0, y1, z0, z1 = ct.bounds()
 
-center = [(x1 - x0) / 2, (y1 - y0) / 2 , (z1 - z0) / 2]
-cam_high = [(x1 - x0) / 2, (y1 - y0)/1.1, (z1 - z0) / 2]
+
+# center = [(x1 - x0) / 2, (y1 - y0) / 2 , (z1 - z0) / 2]
+#cam_high = [(x1 - x0) / 2, (y1 - y0)/1.1, (z1 - z0) / 2]
+
+cam_high = [random.randint(0, x1 // 1),(y1 - y0)/1.1,random.randint(0, z1 // 1)]
+center = [cam_high[0],(y1 - y0) / 2, cam_high[2]]
 cam_side = [-(x1 - x0), (y1 - y0) * 2, (z1 - z0) / 2]
+
+
 
 distance = sqrt((cam_high[0] - center[0]) ** 2 + (cam_high[1] - 0) ** 2 + (cam_high[2] - center[2]) ** 2)
 click = False
@@ -268,8 +276,10 @@ box = Cylinder(pos = (cam_high[0], cam_high[1], cam_high[2]),
 plt = Plotter(shape=shape, sharecam=False, size=(1050, 700))
 plt.at(1).show(Assembly([ct,box]),axes= 1, mode = "image")
 plt.at(1).look_at("xy")
-
+plt.at(1).camera.Azimuth(270)
+plt.at(1).camera.Elevation(45)
 plt.at(1).camera.Zoom(1.5)
+
 
 plt.at(2).look_at("xz").show(ct, roll = 180, mode = "image")
 
@@ -333,8 +343,8 @@ bu6 = plt.at(0).add_button(
     buttonfunc_n,
     pos=(0.26, 0.01),   # x,y fraction from bottom left corner
     states=["n", "n"],  # text for each state
-    c=["w"],     # font color for each state
-    bc=["dg"],  # background color for each state
+    c=["w","w"],     # font color for each state
+    bc=["dg","dv"],  # background color for each state
     font="courier",   # font type
     size=20,          # font size
     bold=True,        # bold font
@@ -354,7 +364,7 @@ bu7 = plt.at(0).add_button(
 
 )
 
-bu3.switch()
+bu6.switch()
 plt.remove_callback('MouseWheelForward')
 plt.remove_callback('MouseWheelBackward')
 plt.remove_callback('KeyPress')
