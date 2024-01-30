@@ -1,41 +1,21 @@
 from vedo import *
-from pynput import mouse
+import dicom2nifti
+import os
 
-pressed = None
-button_key = None
+file_path = "test_folder/"
+img_path = "img_folder/"
+
+for name in os.listdir(file_path):
+    print(name)
+    try:
+        plt = Plotter()
+        ct = Volume(f"{file_path}{name}")
+        plt += ct
+        plt.look_at("xz")
+        plt.camera.Azimuth(180)
+        plt = show(interactive=False).screenshot(f'{img_path}{name[:-7]}.png')
 
 
-def on_click(x, y, button, pressed_key):
-    global pressed
-    pressed = pressed_key
-    
-    global button_key
-    if button == mouse.Button.left:
-        button_key = "left"
-    elif button == mouse.Button.right:
-        button_key = "right"
+    except:
+        print(f"{name} img save error")
 
-def move(evt):
-    global pressed
-    if pressed and button_key == "left":
-        print(evt.delta2d)
-        cone.rotate_z(evt.angle2d)
-        plt.render()
-
-# ...or, in a non-blocking fashion:
-listener = mouse.Listener(
-    on_click=on_click)
-listener.start()
-
-mode = interactor_modes.BlenderStyle()
-
-plt = Plotter()
-
-plt.remove_callback("mouse move")
-plt.remove_callback("keyboard")
-
-plt.add_callback("mouse move", move)
-
-cone = Cone().rotateY(90)
-disc = Disc(r2=0.8).scale(5).lighting('off')
-plt.show(cone, disc, axes=3)

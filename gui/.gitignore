@@ -1,0 +1,6 @@
+/img_folder
+/__pycache__
+/test_folder
+*.png
+*.dcm
+/THIN_ST_TORSO

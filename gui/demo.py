@@ -250,6 +250,7 @@ settings.enable_default_keyboard_callbacks = False
 ct_name = "THIN_ST_TORSO"
 
 ct = Volume(f"{ct_name}.nii.gz")
+print(ct)
 
 # get the demension/shape of the ct scans
 x0, x1, y0, y1, z0, z1 = ct.bounds()
