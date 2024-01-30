@@ -37,12 +37,12 @@ def submit():
             gpu = False
 
         # will check the input directory if videos are available (extension .mp4 or .avi)
-        for file in os.listdir(input_entry):
+        for file in os.listdir(input_path):
             try:
                 if ".api" in file or ".mp4" in file:
                     vid = vidtofrm(input_path + "/" + file, 5, 2, gpu)
                     vid.extframes()
-                    vid.make_vid(output_path + "/" + file[-3:] + "_output.mp4")
+                    vid.make_vid(output_path + "/" + file[:-4] + "_output.mp4")
             except:
                 write = open(output_path + "/log.txt" , "w")
                 write.write(f"{file} caused an error\n")

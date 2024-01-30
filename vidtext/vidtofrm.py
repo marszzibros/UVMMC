@@ -1,9 +1,6 @@
-import cv2
-import numpy as np
 import easyocr
 import cv2
 import numpy as np
-import easyocr
 from copy import deepcopy
 
 """
@@ -80,11 +77,12 @@ class vidtofrm:
         count = 0
         prediction_groups = None
         pre_image = None
+        frm_num = self.vr.get(cv2.CAP_PROP_FRAME_COUNT)
 
         # get the number of frames
         for i in range(0, int(self.vr.get(cv2.CAP_PROP_FRAME_COUNT))):
             success, frame = self.vr.read()
-            
+
             # skip 'every' frames to boost up the speed
             if i % self.every == 0:
 
@@ -99,7 +97,11 @@ class vidtofrm:
                 # save it into numpy array
                 self.img_array.append(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
-                count += 1
+                count += 1            
+
+                progress = open("log.txt", "w")
+                progress.write(f"{count}/{(frm_num // self.every)}")
+                progress.close()
 
     """
     make_vid (method)
