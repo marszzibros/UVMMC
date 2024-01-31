@@ -6,6 +6,8 @@ import random
 import datetime
 import rest_api_write
 import threading
+import sys
+
 
 def send_post_threaded(*args):
     # Define a function to be executed in a separate thread
@@ -267,7 +269,7 @@ settings.enable_default_keyboard_callbacks = False
 
 
 
-ct = Volume(f"{ct_name}.nii.gz")
+ct = Volume(sys.argv[1])
 
 # get the demension/shape of the ct scans
 x0, x1, y0, y1, z0, z1 = ct.bounds()
