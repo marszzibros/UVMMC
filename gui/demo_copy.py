@@ -7,7 +7,7 @@ import datetime
 import rest_api_write
 import threading
 import sys
-
+import time
 x = datetime.datetime.now()
 ct_name = sys.argv[1].split('/')[-1][:-7]
 group_id = f"{ct_name}_{x.timestamp()}_{random.randint(0,1000)}"
@@ -255,6 +255,9 @@ def move(evt):
     global cyl_distance
 
     box_loc = box.pos()
+
+    if pressed:
+        print(f"{datetime.datetime.fromtimestamp(time.time())}")
 
     if pressed and button_key == "left" and abs(evt.delta2d[0]) > abs(evt.delta2d[1]):
 
@@ -527,5 +530,6 @@ plt.add_callback("mouse move", move)
 bu6.switch()
 bu11.switch()
 
+print(ct)
 
 plt.interactive().close()
