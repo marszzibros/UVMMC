@@ -18,6 +18,9 @@ button_key = None
 
 target = 0
 
+# Create a timer thread
+timer_thread = None
+
 
 def random_start():
     cam_high_random = [random.randint(0, x1 // 1),(y1 - y0)/1.1,random.randint(z1 * 2 // 3, z1 // 1)]
@@ -45,15 +48,22 @@ def send_post_threaded(*args):
     thread = threading.Thread(target=send_post_task)
     thread.start()
 
+
 def on_click(x, y, button, pressed_key):
     global pressed
     pressed = pressed_key
-    
+
     global button_key
     if button == mouse.Button.left:
         button_key = "left"
     elif button == mouse.Button.right:
         button_key = "right"
+
+
+listener = mouse.Listener(
+    on_click=on_click)
+listener.start()
+
 
 # Function for x button
 def buttonfunc_x():
@@ -516,5 +526,6 @@ plt.add_callback("mouse move", move)
 
 bu6.switch()
 bu11.switch()
+
 
 plt.interactive().close()
