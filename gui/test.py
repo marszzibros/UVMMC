@@ -14,8 +14,6 @@ for name in os.listdir(file_path):
         plt.look_at("xz")
         plt.camera.Azimuth(180)
         plt = show(interactive=False).screenshot(f'{img_path}{name[:-7]}.png')
-
-
     except:
         print(f"{name} img save error")
 

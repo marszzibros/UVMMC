@@ -14,7 +14,7 @@ def main():
     start = time.time()
     print("Generating")
     patient = deepdrr.Volume.from_nifti(
-        sys.argv[1] + ".nii.gz", use_thresholding=True
+        sys.argv[1], use_thresholding=True
     )
     patient.facedown()
 	
