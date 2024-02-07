@@ -21,6 +21,3 @@ def send_post(x,y,z,a,b,order,sample_name,group_id,target):
     }
     # Make a POST request to insert data into the MySQL table
     response = requests.post(mysql_url, data=data)
-    print(response.text)
-
-send_post(1,2,3,4,5,1,"Asdf","abdf",1)

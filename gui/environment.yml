@@ -1,0 +1,7 @@
+name: uvmmc_gui
+channels:
+  - r
+  - conda-forge
+  - bioconda
+  - defaults
+prefix: /home/marszzibros/anaconda3/envs/uvmmc_gui

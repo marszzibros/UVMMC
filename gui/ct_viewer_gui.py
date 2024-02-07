@@ -8,6 +8,11 @@ import rest_api_write
 import threading
 import sys
 import time
+from generate_deepdrr import Generate 
+
+g = Generate(sys.argv[1])
+g.empty_file()
+
 x = datetime.datetime.now()
 ct_name = sys.argv[1].split('/')[-1][:-7]
 group_id = f"{ct_name}_{x.timestamp()}_{random.randint(0,1000)}"
@@ -20,6 +25,7 @@ target = 0
 
 # Create a timer thread
 timer_thread = None
+time_pre = 0
 
 
 def random_start():
@@ -50,9 +56,9 @@ def send_post_threaded(*args):
 
 
 def on_click(x, y, button, pressed_key):
-    global pressed
+    global pressed, press_time
     pressed = pressed_key
-
+  
     global button_key
     if button == mouse.Button.left:
         button_key = "left"
@@ -152,10 +158,9 @@ def buttonfunc_g():
 
     sin_rad_alpha = (pos[0] - foc[0]) / cam_distance
     sin_rad_beta = (pos[2] - foc[2]) / cam_distance
-
-    os.system(f"python example_projector.py {sys.argv[1]} {loc[2] - center[2]} {loc[0] - center[0]} {loc[1] - center[1]} {math.asin(sin_rad_alpha)} {math.asin(sin_rad_beta)}")
-    plt.at(3).show(Picture("example_projector.png"),axes=0, zoom=1.5)
-
+    
+    g.deepdrr_run(loc[2] - center[2], loc[0] - center[0],loc[1] - center[1], math.asin(sin_rad_alpha),math.asin(sin_rad_beta))
+    plt.at(3).show(Picture("projector.png"),axes=0, zoom=1.5)
 # Function for arch button
 def buttonfunc_arch():
     global target 
@@ -229,8 +234,13 @@ def buttonfunc_start():
     elif bu10.status_idx == 1:
         bu10.switch()
         bu11.switch()
-
+    plt.at(4).remove()
+    plt.at(4).show([Text2D("1. Select options(arch/neck/head)\n \
+(left-click drag: x,y positions | right-click drag: a, b algles)", pos = "top-left",c="r"),
+                    Text2D("2. Move to the chosen target \n ",pos = "middle-left"),
+                    Text2D("3. Click Enter button (maybe discuss)\n",pos = "bottom-left")])
 def move(evt):
+    
 
     """
     if a or A is pressed
@@ -253,14 +263,23 @@ def move(evt):
     global pressed
     global cam_distance
     global cyl_distance
+    global time_pre
 
+    if not pressed and time_pre == 0:
+        time_pre = time.time()
+    elif not pressed and time.time() - time_pre >= 2:
+        pass
+    elif not pressed and time.time() - time_pre >= 0.5:
+        buttonfunc_g()
+
+    
     box_loc = box.pos()
 
     if pressed:
-        print(f"{datetime.datetime.fromtimestamp(time.time())}")
+        time_pre = 0
 
     if pressed and button_key == "left" and abs(evt.delta2d[0]) > abs(evt.delta2d[1]):
-
+        
         if evt.delta2d[0] > 0:
 
             if box_loc [2] + 10 < z1:
@@ -352,6 +371,7 @@ def move(evt):
     sin_rad_beta = (pos[2] - foc[2]) / cam_distance
     global order
     if moved and target != 0:
+        
         send_post_threaded(loc[2] - center[2], loc[0] - center[0], loc[1] - center[1], math.asin(sin_rad_alpha), math.asin(sin_rad_beta), order, ct_name, group_id, target)
         order+=1
     plt.render()
@@ -381,12 +401,11 @@ shape = [
     dict(bottomleft=(0.01,0.6), topright=(0.65,0.99), bg='w'), # the display window
     dict(bottomleft=(0.66,0.6), topright=(0.99,0.99), bg='w'), # the display window
     dict(bottomleft=(0.66,0.1), topright=(0.99,0.55), bg='w'), # the display window
+    dict(bottomleft=(0.01,0.1), topright=(0.65,0.55), bg='w'), # the display window
 ]
 
 # setup plotter
 plt = Plotter(shape=shape, sharecam=False, size=(1050, 700))
-
-cam_high = [random.randint(0, x1 // 1),(y1 - y0)/1.1,random.randint(z1 * 2 // 3, z1 // 1)]
 
 plt.at(1).show(Assembly([ct,box]),axes= 1, mode = "image")
 plt.at(1).look_at("xy")
@@ -400,6 +419,12 @@ temp_pos = plt.at(2).camera.GetPosition()
 
 plt.at(2).camera.SetFocalPoint(cam_high[0], center[1], cam_high[2])
 plt.at(2).camera.SetPosition(cam_high[0], - temp_pos[1], cam_high[2])
+plt.at(3).show(Picture("projector.png"),axes=0, zoom=1.5)
+
+plt.at(4).show([Text2D("1. Select options(arch/neck/head)\n \
+(left-click drag: x,y positions | right-click drag: a, b algles)", pos = "top-left"),
+                Text2D("2. Move to the chosen target \n ",pos = "middle-left"),
+                Text2D("3. Click Enter button (maybe discuss)\n",pos = "bottom-left")])
 
 cam_distance = -temp_pos[1] - center[1]
 cyl_distance = box.pos()[1] - center[1]
@@ -524,12 +549,13 @@ bu11 = plt.at(0).add_button(
 
 plt.remove_callback("mouse move")
 plt.remove_callback("keyboard")
+plt.remove_callback("MouseWheelForward")
+plt.remove_callback("MouseWheelBackward")
 
 plt.add_callback("mouse move", move)
 
 bu6.switch()
 bu11.switch()
 
-print(ct)
 
 plt.interactive().close()

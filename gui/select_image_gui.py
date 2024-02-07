@@ -33,7 +33,7 @@ def execute_command():
 
     if selected_file:
         full_file_path = os.path.join(selected_directory, selected_file)
-        os.system(f"python3 demo_copy.py {full_file_path}")
+        os.system(f"python3 ct_viewer_gui.py {full_file_path}")
     else:
         messagebox.showwarning("No File Selected", "Please select a '.nii.gz' file before executing the command.")
 
