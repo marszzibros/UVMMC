@@ -4,3 +4,4 @@
 *.png
 *.dcm
 /THIN_ST_TORSO
+!guide1.png
