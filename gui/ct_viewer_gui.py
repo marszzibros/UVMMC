@@ -14,8 +14,12 @@ g = Generate(sys.argv[1])
 g.empty_file()
 
 x = datetime.datetime.now()
+
 ct_name = sys.argv[1].split('/')[-1][:-7]
-group_id = f"{ct_name}_{x.timestamp()}_{random.randint(0,1000)}"
+operator = sys.argv[2]
+case_name = sys.argv[1]
+
+# group_id = f"{ct_name}_{x.timestamp()}_{random.randint(0,1000)}"
 order = 1
 
 pressed = None
@@ -26,6 +30,9 @@ target = 0
 # Create a timer thread
 timer_thread = None
 time_pre = 0
+
+
+position_list = ["skull", "right_humeral_head", "left_humeral_head", "right_capula", "left_scapula", "T1", "carina", "T12", "L5", "right_iliac_crest", "left_iliac_crest"]
 
 
 def random_start():
@@ -56,9 +63,9 @@ def send_post_threaded(*args):
 
 
 def on_click(x, y, button, pressed_key):
-    global pressed, press_time
+    global pressed
     pressed = pressed_key
-  
+    print(pressed_key)
     global button_key
     if button == mouse.Button.left:
         button_key = "left"
@@ -66,9 +73,6 @@ def on_click(x, y, button, pressed_key):
         button_key = "right"
 
 
-listener = mouse.Listener(
-    on_click=on_click)
-listener.start()
 
 
 # Function for x button
@@ -161,84 +165,108 @@ def buttonfunc_g():
     
     g.deepdrr_run(loc[2] - center[2], loc[0] - center[0],loc[1] - center[1], math.asin(sin_rad_alpha),math.asin(sin_rad_beta))
     plt.at(3).show(Picture("projector.png"),axes=0, zoom=1.5)
-# Function for arch button
-def buttonfunc_arch():
-    global target 
+
+def buttonfunc_finish():
+    pos = plt.at(2).camera.GetPosition()
+    foc = plt.at(2).camera.GetFocalPoint()
+    
+    global cam_distance
+
+    loc = box.GetPosition()
+
+    sin_rad_alpha = (pos[0] - foc[0]) / cam_distance
+    sin_rad_beta = (pos[2] - foc[2]) / cam_distance
+
     global order
 
-    if bu8.status_idx == 0:
-        random_start()
-        target = 1
-        order = 1
-    if bu9.status_idx == 1:
-        bu9.switch()
-        bu8.switch()
-    elif bu10.status_idx == 1:
-        bu10.switch()
-        bu8.switch()
-    elif bu11.status_idx == 1:
-        bu11.switch()
-        bu8.switch()
+    # x, y, z, a, b, position (1-11), ct_name (file name), operator_id, case name
+    send_post_threaded(loc[2] - center[2], loc[0] - center[0], loc[1] - center[1], math.asin(sin_rad_alpha), math.asin(sin_rad_beta), order, ct_name, operator, case_name)
+    order+=1
+    plt.at(4).show(Picture(f"result_text/{position_list[order - 1]}.png"),axes=0,zoom=2.2)
+    random_start()
+    
+listener = mouse.Listener( 
+    on_click=on_click,)
+listener.start()
 
-# Function for neck button
-def buttonfunc_neck():
-    global target 
-    global order
+# # Function for arch button
+# def buttonfunc_arch():
+#     global target 
+#     global order
 
-    if bu9.status_idx == 0:
-        random_start()
-        target = 2
-        order = 1
-    if bu8.status_idx == 1:
-        bu8.switch()
-        bu9.switch()
-    elif bu10.status_idx == 1:
-        bu10.switch()
-        bu9.switch()
-    elif bu11.status_idx == 1:
-        bu11.switch()
-        bu9.switch()
+#     if bu8.status_idx == 0:
+#         random_start()
+#         target = 1
+#         order = 1
+#     if bu9.status_idx == 1:
+#         bu9.switch()
+#         bu8.switch()
+#     elif bu10.status_idx == 1:
+#         bu10.switch()
+#         bu8.switch()
+#     elif bu11.status_idx == 1:
+#         bu11.switch()
+#         bu8.switch()
 
-# Function for head button
-def buttonfunc_head():
-    global target 
-    global order
+# # Function for neck button
+# def buttonfunc_neck():
+#     global target 
+#     global order
 
-    if bu10.status_idx == 0:
-        random_start()
-        target = 3
-        order = 1
-    if bu8.status_idx == 1:
-        bu8.switch()
-        bu10.switch()
-    elif bu9.status_idx == 1:
-        bu9.switch()
-        bu10.switch()
-    elif bu11.status_idx == 1:
-        bu11.switch()
-        bu10.switch()
+#     if bu9.status_idx == 0:
+#         random_start()
+#         target = 2
+#         order = 1
+#     if bu8.status_idx == 1:
+#         bu8.switch()
+#         bu9.switch()
+#     elif bu10.status_idx == 1:
+#         bu10.switch()
+#         bu9.switch()
+#     elif bu11.status_idx == 1:
+#         bu11.switch()
+#         bu9.switch()
 
-# Function for start button
-def buttonfunc_start():
-    global target 
+# # Function for head button
+# def buttonfunc_head():
+#     global target 
+#     global order
 
-    if bu11.status_idx == 0:
-        random_start()
-        target = 0
-    if bu8.status_idx == 1:
-        bu8.switch()
-        bu11.switch()
-    elif bu9.status_idx == 1:
-        bu9.switch()
-        bu11.switch()
-    elif bu10.status_idx == 1:
-        bu10.switch()
-        bu11.switch()
-    plt.at(4).remove()
-    plt.at(4).show([Text2D("1. Select options(arch/neck/head)\n \
-(left-click drag: x,y positions | right-click drag: a, b algles)", pos = "top-left",c="r"),
-                    Text2D("2. Move to the chosen target \n ",pos = "middle-left"),
-                    Text2D("3. Click Enter button (maybe discuss)\n",pos = "bottom-left")])
+#     if bu10.status_idx == 0:
+#         random_start()
+#         target = 3
+#         order = 1
+#     if bu8.status_idx == 1:
+#         bu8.switch()
+#         bu10.switch()
+#     elif bu9.status_idx == 1:
+#         bu9.switch()
+#         bu10.switch()
+#     elif bu11.status_idx == 1:
+#         bu11.switch()
+#         bu10.switch()
+
+# # Function for start button
+# def buttonfunc_start():
+#     global target 
+
+#     if bu11.status_idx == 0:
+#         random_start()
+#         target = 0
+#     if bu8.status_idx == 1:
+#         bu8.switch()
+#         bu11.switch()
+#     elif bu9.status_idx == 1:
+#         bu9.switch()
+#         bu11.switch()
+#     elif bu10.status_idx == 1:
+#         bu10.switch()
+#         bu11.switch()
+#     plt.at(4).remove()
+#     plt.at(4).show([Text2D("1. Select options(arch/neck/head)\n \
+# (left-click drag: x,y positions | right-click drag: a, b algles)", pos = "top-left",c="r"),
+#                     Text2D("2. Move to the chosen target \n ",pos = "middle-left"),
+#                     Text2D("3. Click Enter button (maybe discuss)\n",pos = "bottom-left")])
 def move(evt):
     
 
@@ -265,9 +293,10 @@ def move(evt):
     global cyl_distance
     global time_pre
 
+    print(time_pre)
     if not pressed and time_pre == 0:
         time_pre = time.time()
-    elif not pressed and time.time() - time_pre >= 2:
+    elif not pressed and time.time() - time_pre >= 3:
         pass
     elif not pressed and time.time() - time_pre >= 0.5:
         buttonfunc_g()
@@ -369,11 +398,11 @@ def move(evt):
 
     sin_rad_alpha = (pos[0] - foc[0]) / cam_distance
     sin_rad_beta = (pos[2] - foc[2]) / cam_distance
-    global order
-    if moved and target != 0:
+    # global order
+    # if moved and target != 0:
         
-        send_post_threaded(loc[2] - center[2], loc[0] - center[0], loc[1] - center[1], math.asin(sin_rad_alpha), math.asin(sin_rad_beta), order, ct_name, group_id, target)
-        order+=1
+        # send_post_threaded(loc[2] - center[2], loc[0] - center[0], loc[1] - center[1], math.asin(sin_rad_alpha), math.asin(sin_rad_beta), order, ct_name, operator, target)
+        # order+=1
     plt.render()
 
 # disable draging via mouse
@@ -400,7 +429,7 @@ shape = [
     dict(bottomleft=(0,0), topright=(1,1), bg='k7'), # the full empty window
     dict(bottomleft=(0.01,0.6), topright=(0.65,0.99), bg='w'), # the display window
     dict(bottomleft=(0.66,0.6), topright=(0.99,0.99), bg='w'), # the display window
-    dict(bottomleft=(0.66,0.1), topright=(0.99,0.55), bg='w'), # the display window
+    dict(bottomleft=(0.66,0.1), topright=(0.99,0.55), bg='w'),
     dict(bottomleft=(0.01,0.1), topright=(0.65,0.55), bg='w'), # the display window
 ]
 
@@ -421,10 +450,7 @@ plt.at(2).camera.SetFocalPoint(cam_high[0], center[1], cam_high[2])
 plt.at(2).camera.SetPosition(cam_high[0], - temp_pos[1], cam_high[2])
 plt.at(3).show(Picture("projector.png"),axes=0, zoom=1.5)
 
-plt.at(4).show([Text2D("1. Select options(arch/neck/head)\n \
-(left-click drag: x,y positions | right-click drag: a, b algles)", pos = "top-left"),
-                Text2D("2. Move to the chosen target \n ",pos = "middle-left"),
-                Text2D("3. Click Enter button (maybe discuss)\n",pos = "bottom-left")])
+plt.at(4).show(Picture(f"result_text/{position_list[order - 1]}.png"),axes=0, zoom=2.2)
 
 cam_distance = -temp_pos[1] - center[1]
 cyl_distance = box.pos()[1] - center[1]
@@ -500,12 +526,12 @@ bu7 = plt.at(0).add_button(
     size=20,          # font size
     bold=True,        # bold font
     italic=False,     # non-italic font style
+)
 
-)
 bu8 =plt.at(0).add_button(
-    buttonfunc_arch,
-    pos=(0.38, 0.01),   # x,y fraction from bottom left corner
-    states=["arch", "arch"],  # text for each state
+    buttonfunc_finish,
+    pos=(0.40, 0.01),   # x,y fraction from bottom left corner
+    states=["Finish", "Finish"],  # text for each state
     c=["w", "w"],     # font color for each state
     bc=["dg", "dv"],  # background color for each state
     font="courier",   # font type
@@ -513,39 +539,50 @@ bu8 =plt.at(0).add_button(
     bold=True,        # bold font
     italic=False,     # non-italic font style
 )
-bu9 = plt.at(0).add_button(
-    buttonfunc_neck,
-    pos=(0.46, 0.01),   # x,y fraction from bottom left corner
-    states=["neck", "neck"],  # text for each state
-    c=["w", "w"],     # font color for each state
-    bc=["dg", "dv"],  # background color for each state
-    font="courier",   # font type
-    size=20,          # font size
-    bold=True,        # bold font
-    italic=False,     # non-italic font style
-)
-bu10 = plt.at(0).add_button(
-    buttonfunc_head,
-    pos=(0.54, 0.01),   # x,y fraction from bottom left corner
-    states=["head", "head"],  # text for each state
-    c=["w", "w"],     # font color for each state
-    bc=["dg", "dv"],  # background color for each state
-    font="courier",   # font type
-    size=20,          # font size
-    bold=True,        # bold font
-    italic=False,     # non-italic font style
-)
-bu11 = plt.at(0).add_button(
-    buttonfunc_start,
-    pos=(0.6, 0.01),   # x,y fraction from bottom left corner
-    states=["s", "s"],  # text for each state
-    c=["w", "w"],     # font color for each state
-    bc=["dg", "dv"],  # background color for each state
-    font="courier",   # font type
-    size=20,          # font size
-    bold=True,        # bold font
-    italic=False,     # non-italic font style
-)
+# bu8 =plt.at(0).add_button(
+#     buttonfunc_arch,
+#     pos=(0.38, 0.01),   # x,y fraction from bottom left corner
+#     states=["arch", "arch"],  # text for each state
+#     c=["w", "w"],     # font color for each state
+#     bc=["dg", "dv"],  # background color for each state
+#     font="courier",   # font type
+#     size=20,          # font size
+#     bold=True,        # bold font
+#     italic=False,     # non-italic font style
+# )
+# bu9 = plt.at(0).add_button(
+#     buttonfunc_neck,
+#     pos=(0.46, 0.01),   # x,y fraction from bottom left corner
+#     states=["neck", "neck"],  # text for each state
+#     c=["w", "w"],     # font color for each state
+#     bc=["dg", "dv"],  # background color for each state
+#     font="courier",   # font type
+#     size=20,          # font size
+#     bold=True,        # bold font
+#     italic=False,     # non-italic font style
+# )
+# bu10 = plt.at(0).add_button(
+#     buttonfunc_head,
+#     pos=(0.54, 0.01),   # x,y fraction from bottom left corner
+#     states=["head", "head"],  # text for each state
+#     c=["w", "w"],     # font color for each state
+#     bc=["dg", "dv"],  # background color for each state
+#     font="courier",   # font type
+#     size=20,          # font size
+#     bold=True,        # bold font
+#     italic=False,     # non-italic font style
+# )
+# bu11 = plt.at(0).add_button(
+#     buttonfunc_start,
+#     pos=(0.6, 0.01),   # x,y fraction from bottom left corner
+#     states=["s", "s"],  # text for each state
+#     c=["w", "w"],     # font color for each state
+#     bc=["dg", "dv"],  # background color for each state
+#     font="courier",   # font type
+#     size=20,          # font size
+#     bold=True,        # bold font
+#     italic=False,     # non-italic font style
+# )
 
 plt.remove_callback("mouse move")
 plt.remove_callback("keyboard")
@@ -555,7 +592,7 @@ plt.remove_callback("MouseWheelBackward")
 plt.add_callback("mouse move", move)
 
 bu6.switch()
-bu11.switch()
+# bu11.switch()
 
 
 plt.interactive().close()

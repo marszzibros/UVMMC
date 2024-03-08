@@ -30,10 +30,14 @@ def submit_action():
 def execute_command():
     selected_file = file_var.get()
     selected_directory = entry_path.get()
+    additional_entry_value = additional_entry.get()
 
     if selected_file:
-        full_file_path = os.path.join(selected_directory, selected_file)
-        os.system(f"python3 ct_viewer_gui.py {full_file_path}")
+        if additional_entry_value:
+            full_file_path = os.path.join(selected_directory, selected_file)
+            os.system(f"python ct_viewer_gui.py {full_file_path} {additional_entry_value}")
+        else:
+            messagebox.showwarning("Empty Entry", "Please enter a value in the additional entry box before executing the command.")
     else:
         messagebox.showwarning("No File Selected", "Please select a '.nii.gz' file before executing the command.")
 
@@ -54,14 +58,18 @@ button_browse.grid(row=0, column=2, padx=10, pady=10)
 button_submit = tk.Button(root, text="Submit", command=submit_action)
 button_submit.grid(row=1, column=1, pady=20)
 
+# Additional entry box
+additional_entry = tk.Entry(root, width=40)
+additional_entry.grid(row=2, column=1, padx=10, pady=10)
+
 # OptionMenu to display the list of files
 file_var = tk.StringVar(root)
 file_menu = tk.OptionMenu(root, file_var, "")
-file_menu.grid(row=2, column=1, pady=10)
+file_menu.grid(row=3, column=1, pady=10)
 
 # Button to execute command
 button_execute_command = tk.Button(root, text="Execute Command", command=execute_command)
-button_execute_command.grid(row=3, column=1, pady=10)
+button_execute_command.grid(row=4, column=1, pady=10)
 
 # Start the Tkinter event loop
 root.mainloop()
