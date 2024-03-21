@@ -9,7 +9,7 @@ def process_file(file_path, name):
     except Exception as e:
         print(f"Attempt failed in {name}: {str(e)}")
 
-file_path = "/media/marszzibros/New Volume/case-100968/STANDARD_HEAD-NECK/"
+file_path = "case_3/"
 output_folder = "test_folder/"
 
 threads = []

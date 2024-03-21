@@ -21,7 +21,19 @@
         public function __construct($db){
             $this->conn = $db;
         }
-
+        public function all() {
+            // Create Query
+            $query = 'SELECT * FROM JJUNG2_AUTOMATION_DATABASE.' . $this -> table .';';
+            $stmt = $this->conn->prepare($query);
+            try{
+            // Execute Query
+            $stmt -> execute();
+            }
+            catch (Exception $e){
+                echo $e;
+            }
+            return $stmt;
+        }
         // Get records
         public function read($group_id) {
             // Create Query

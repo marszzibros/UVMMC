@@ -9,14 +9,51 @@ import numpy as np
 
 class Generate:
     def __init__(self, file, path = "projector.png"):
+        """
+        Generate class
+
+        Descriptions
+        --------------------------------
+        generate simulated x-ray image using Deep DRR
+
+        Args
+        --------------------------------
+        file: str
+            file path
+        path: str
+            output name
+        """
+
+        # set volume
         self.patient = deepdrr.Volume.from_nifti(file, use_thresholding=True)
         self.patient.facedown()
         self.path = path
 
     def deepdrr_run(self, x, y, z, a, b):
-        print("generating")
+        """
+        deepdrr_run
+        
+        Descriptions
+        --------------------------------
+        generate simulated x-ray image using Deep DRR
+
+        Args
+        --------------------------------
+        x: float
+            x coordinate value from center of the volume
+        y: float
+            y coordinate value from center of the volume
+        z: float
+            z coordinate value from center of the volume
+        a: float
+            alpha value in radient
+        b: float
+            beta value in radient
+
+        """
+
         # define the simulated C-arm
-        carm = deepdrr.MobileCArm(self.patient.center_in_world + geo.v(float(x) ,-float(y),-float(z) -250), 
+        carm = deepdrr.MobileCArm(self.patient.center_in_world + geo.v(float(x) ,-float(y),-float(z) * 1.5), 
                                 alpha=-np.rad2deg(float(a)),
                                 beta=-np.rad2deg(float(b)))
 
@@ -25,9 +62,17 @@ class Generate:
 
             image = projector()
 
+        # save image
         image_utils.save(self.path, image) 
-        print("done")
+
     def empty_file(self):
+        """
+        empty_file
+        
+        Descriptions
+        --------------------------------
+        remove previously generated files; create an image with white background
+        """
         image_utils.save(self.path, np.ones((1536, 1536))) 
 
 
