@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 def browse_directory():
-    folder_path = filedialog.askdirectory()
+    folder_path = filedialog.askdirectory(initialdir="/home/raymondlab/Documents/UVMMC/test_folder")
     entry_path.delete(0, tk.END)
     entry_path.insert(0, folder_path)
 
