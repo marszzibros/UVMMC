@@ -53,7 +53,7 @@ class Generate:
         """
 
         # define the simulated C-arm
-        carm = deepdrr.MobileCArm(self.patient.center_in_world + geo.v(float(x) ,-float(y),-float(z) * 1.5), 
+        carm = deepdrr.MobileCArm(self.patient.center_in_world + geo.v(float(x) ,-float(y),-float(z) * 1.2), 
                                 alpha=-np.rad2deg(float(a)),
                                 beta=-np.rad2deg(float(b)))
 
