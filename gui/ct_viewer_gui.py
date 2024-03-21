@@ -57,7 +57,7 @@ def random_start():
 
     plt.at(2).camera.SetFocalPoint(cam_high_random[0], center[1], cam_high_random[2])
     plt.at(2).camera.SetPosition(cam_high_random[0], - temp_pos[1], cam_high_random[2])
-    plt.at(2).camera.Zoom(3.8)    
+    plt.at(2).camera.Zoom(4)    
 
     plt.render()
 
@@ -400,7 +400,7 @@ plt.at(4).show(Picture(f"result_text/{position_list[order - 1]}.png"),axes=0, zo
 cam_distance = -temp_pos[1] - center[1]
 cyl_distance = box.pos()[1] - center[1]
 
-plt.at(2).camera.Zoom(3.8)    
+plt.at(2).camera.Zoom(4)    
 
 # Add a button to the plotter with buttonfunc as the callback function
 bu1 = plt.at(0).add_button(
