@@ -60,7 +60,7 @@ def random_start():
 
     plt.at(2).camera.SetFocalPoint(cam_high_random[0], center[1], cam_high_random[2])
     plt.at(2).camera.SetPosition(cam_high_random[0], - temp_pos[1], cam_high_random[2])
-    plt.at(2).camera.Zoom(3.5)    
+    plt.at(2).camera.Zoom(2.8)    
 
     plt.render()
 
@@ -384,10 +384,10 @@ circle = Cylinder(pos = (cam_high[0], cam_high[1] / 1.39, cam_high[2]),
 
 shape = [
     dict(bottomleft=(0,0), topright=(1,1), bg='k7'), # the full empty window
-    dict(bottomleft=(0.01,0.6), topright=(0.65,0.99), bg='w'), # ct with box
-    dict(bottomleft=(0.66,0.6), topright=(0.99,0.99), bg='w'), # ct x-ray view
-    dict(bottomleft=(0.66,0.1), topright=(0.99,0.55), bg='w'), # x-ray view
-    dict(bottomleft=(0.01,0.1), topright=(0.65,0.55), bg='w'), # instructions
+    dict(bottomleft=(0.01,0.6), topright=(0.65,0.93), bg='w'), # ct with box
+    dict(bottomleft=(0.66,0.6), topright=(0.99,0.93), bg='w'), # ct x-ray view
+    dict(bottomleft=(0.66,0.1), topright=(0.99,0.43), bg='w'), # x-ray view
+    dict(bottomleft=(0.01,0.1), topright=(0.65,0.43), bg='w'), # instructions
 ]
 
 # setup plotter
@@ -412,7 +412,7 @@ plt.at(4).show(Picture(f"result_text/{position_list[order - 1]}.png"),axes=0, zo
 cam_distance = -temp_pos[1] - center[1]
 cyl_distance = box.pos()[1] - center[1]
 
-plt.at(2).camera.Zoom(3.5)    
+plt.at(2).camera.Zoom(2.8)    
 
 # Add a button to the plotter with buttonfunc as the callback function
 bu1 = plt.at(0).add_button(
