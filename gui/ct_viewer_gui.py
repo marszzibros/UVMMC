@@ -50,6 +50,9 @@ def random_start():
     box.x(cam_high_random[0])
     box.z(cam_high_random[2])
 
+    circle.x(cam_high_random[0])
+    circle.z(cam_high_random[2])
+
     plt.at(2).reset_camera()
     plt.at(2).look_at("xz").roll(180)
 
@@ -57,7 +60,7 @@ def random_start():
 
     plt.at(2).camera.SetFocalPoint(cam_high_random[0], center[1], cam_high_random[2])
     plt.at(2).camera.SetPosition(cam_high_random[0], - temp_pos[1], cam_high_random[2])
-    plt.at(2).camera.Zoom(4.2)    
+    plt.at(2).camera.Zoom(3.5)    
 
     plt.render()
 
@@ -314,6 +317,7 @@ def move(evt):
 
             if box_loc [2] + 10 < z1:
                 box.z(box_loc[2] + 10)
+                circle.z(box_loc[2] + 10)
                 plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] + 10])
                 plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] + 10])
                 moved=True
@@ -321,6 +325,7 @@ def move(evt):
     
             if box_loc [2] - 10 > z0:
                 box.z(box_loc[2] - 10)
+                circle.z(box_loc[2] - 10)
                 plt.at(2).camera.SetFocalPoint([foc[0], foc[1], foc[2] - 10])
                 plt.at(2).camera.SetPosition([pos[0], pos[1], pos [2] - 10])        
                 moved=True
@@ -331,6 +336,7 @@ def move(evt):
         if evt.delta2d[1] > 0:
             if box_loc [0] + 10 < x1:
                 box.x(box_loc[0] + 10)
+                circle.x(box_loc[0] + 10)
                 plt.at(2).camera.SetFocalPoint([foc[0] + 10, foc[1], foc[2]])
                 plt.at(2).camera.SetPosition([pos[0] + 10, pos[1], pos[2]])    
                 moved=True
@@ -338,6 +344,7 @@ def move(evt):
         else:
             if box_loc [0] - 10 > x0:
                 box.x(box_loc[0] - 10)
+                circle.x(box_loc[0] - 10)
                 plt.at(2).camera.SetFocalPoint([foc[0] - 10, foc[1], foc[2]])
                 plt.at(2).camera.SetPosition([pos[0] - 10, pos[1], pos [2]])
                 moved=True       
@@ -369,6 +376,11 @@ box = Cylinder(pos = (cam_high[0], cam_high[1], cam_high[2]),
           height = 20,
           alpha = 1,
            axis = (0, 1, 0) )
+circle = Cylinder(pos = (cam_high[0], cam_high[1] / 1.39, cam_high[2]),
+          r = 10,
+          height = 20,
+          alpha = 1,
+           axis = (0, 1, 0), c='red')
 
 shape = [
     dict(bottomleft=(0,0), topright=(1,1), bg='k7'), # the full empty window
@@ -387,7 +399,7 @@ plt.at(1).camera.Azimuth(270)
 plt.at(1).camera.Elevation(45)
 plt.at(1).camera.Zoom(1.5)
 
-plt.at(2).look_at("xz").show(ct, roll = 180, mode = "image")
+plt.at(2).look_at("xz").show(Assembly([ct,circle]), roll = 180, mode = "image")
 
 temp_pos = plt.at(2).camera.GetPosition()
 
@@ -400,7 +412,7 @@ plt.at(4).show(Picture(f"result_text/{position_list[order - 1]}.png"),axes=0, zo
 cam_distance = -temp_pos[1] - center[1]
 cyl_distance = box.pos()[1] - center[1]
 
-plt.at(2).camera.Zoom(4.2)    
+plt.at(2).camera.Zoom(3.5)    
 
 # Add a button to the plotter with buttonfunc as the callback function
 bu1 = plt.at(0).add_button(
