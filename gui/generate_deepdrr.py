@@ -5,7 +5,10 @@ import deepdrr
 from deepdrr import geo
 from deepdrr.utils import test_utils, image_utils
 from deepdrr.projector import Projector
+import cv2
 import numpy as np
+from skimage import exposure
+import matplotlib.pyplot as plt
 
 class Generate:
     def __init__(self, file, path = "projector.png"):
@@ -53,7 +56,7 @@ class Generate:
         """
 
         # define the simulated C-arm
-        carm = deepdrr.MobileCArm(self.patient.center_in_world + geo.v(float(x) ,-float(y),-float(z) * 1.2), 
+        carm = deepdrr.MobileCArm(self.patient.center_in_world + geo.v(float(x) ,-float(y),-float(z) * 1.5), 
                                 alpha=-np.rad2deg(float(a)),
                                 beta=-np.rad2deg(float(b)))
 
@@ -62,8 +65,30 @@ class Generate:
 
             image = projector()
 
-        # save image
-        image_utils.save(self.path, image) 
+
+        equalized_image = exposure.equalize_adapthist(image/np.max(image))
+
+        # Get the center coordinates of the image
+        center_x = equalized_image.shape[1] // 2
+        center_y = equalized_image.shape[0] // 2
+
+        # Create a copy of the equalized image
+        image_with_cross = equalized_image.copy()
+
+        # Define the size of the cross
+        cross_size = 20
+
+        # Draw horizontal and vertical lines for the cross
+        image_with_cross[center_y - cross_size // 2: center_y + cross_size // 2 + 1, :] = 1
+        image_with_cross[:, center_x - cross_size // 2: center_x + cross_size // 2 + 1] = 1
+
+        # Create a mesh grid for the circle
+        x, y = np.meshgrid(np.arange(image_with_cross.shape[1]), np.arange(image_with_cross.shape[0]))
+        dist = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+
+        # Draw a circle in the middle
+        image_with_cross[dist <= cross_size // 2] = 1
+        plt.imsave('projector.png', image_with_cross, cmap='gray')
 
     def empty_file(self):
         """
