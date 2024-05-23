@@ -19,7 +19,7 @@ response = requests.get(mysql_url)
 table = pd.DataFrame(response.json()['data'])
 table['case_number'] = table['target'].apply(extract_case_number)
 
-file_path = "test_folder/"
+file_path = "sample/"
 output_path = "regenerated"
  
 if os.path.exists(output_path):
@@ -33,9 +33,11 @@ else:
     except OSError as e:
         print(f"Error: {output_path} : {e.strerror}")
 
-for location in range(1,12):
+for location in range(1,19):
     os.makedirs(f"{output_path}/{location}")
 
 for i in range(0, len(table)):
     g = Generate(file = f"{file_path}/{table.iloc[i]['case_number']}.nii.gz", path=f"{output_path}/{table.iloc[i]['item_order']}/{table.iloc[i]['case_number']}_{table.iloc[i]['sample_name']}_{table.iloc[i]['x']}_{table.iloc[i]['y']}_{table.iloc[i]['z']}_{table.iloc[i]['a']}_{table.iloc[i]['b']}_{table.iloc[i]['group_id']}.png")
-    g.deepdrr_run(table.iloc[i]['x'],table.iloc[i]['y'],table.iloc[i]['z'],table.iloc[i]['a'],table.iloc[i]['b'])
+    g.deepdrr_regenerate(table.iloc[i]['x'],table.iloc[i]['y'],table.iloc[i]['z'],table.iloc[i]['a'],table.iloc[i]['b'])
+
+table.to_csv("regenerated.csv")
