@@ -5,7 +5,6 @@ import deepdrr
 from deepdrr import geo
 from deepdrr.utils import test_utils, image_utils
 from deepdrr.projector import Projector
-import cv2
 import numpy as np
 from skimage import exposure
 import matplotlib.pyplot as plt
@@ -99,6 +98,5 @@ class Generate:
         remove previously generated files; create an image with white background
         """
         image_utils.save(self.path, np.ones((1536, 1536))) 
-
 
 
