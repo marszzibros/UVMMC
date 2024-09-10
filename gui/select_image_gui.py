@@ -3,10 +3,13 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import pandas as pd
 import numpy as np
+import requests
+import json
 
 patients = []
 files = []
 parts = []
+
 
 
 with os.scandir("sample_datasets") as entries:
@@ -33,10 +36,43 @@ def execute_command():
     count = 0
     user_id = userid_entry.get()
     if user_id:
+        mysql_url = f'https://jjung2.w3.uvm.edu/uvmmc/api/read.php?group_id={user_id}'
+
+        response = requests.get(mysql_url)
+
+        # Check for successful request
+        if response.status_code == 200:
+            # Get the JSON content
+            json_data = response.json()
+
+            # Create DataFrame
+            try:
+                df = pd.DataFrame(json_data['data'])
+                target_done = np.array(df['target'])
+            except (json.JSONDecodeError, KeyError):
+                print("Error: Could not parse JSON response or missing data.")
+                target_done = []
+
+        else:
+            print("Error:", response.status_code, response.reason)
+            target_done = []
+
         for file in file_lists:
-            os.system(f"python ct_viewer_gui_temp.py {file} {user_id}")
-            count += 1
-            print(f"{count}/{len(file_lists)}")
+            if count > -1:
+                not_done = True
+                for done in target_done:
+                    if done in file:
+                        not_done = False
+                        count += 1
+                        break
+
+                if not_done:
+                    os.system(f"python ct_viewer_gui_temp.py {file} {user_id}")
+                    count += 1
+                    print(f"{count}/{len(file_lists)}")
+
+            else:
+                count +=1
     else:
         messagebox.showwarning("Empty Entry", "Please enter a value in the additional entry box before executing the command.")
     

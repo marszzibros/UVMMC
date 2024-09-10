@@ -4,7 +4,7 @@ import math
 import datetime
 import rest_api_write
 import threading
-
+from vedo.applications import IsosurfaceBrowser
 from generate_deepdrr import Generate 
 
 # initiate deepdrr initiation
@@ -38,11 +38,13 @@ position_list = ["skull",
                  "left_wrist", 
                  "T1", 
                  "carina", 
+                 "right_hemidiaphragm",
+                 "left_hemidiaphragm",
                  "T12", 
                  "L5", 
                  "right_iliac_crest", 
                  "left_iliac_crest",
-                 "public_symphysis",
+                 "pubic_symphysis",
                  "right_femoral_head",
                  "left_femoral_head"]
 
@@ -73,11 +75,11 @@ def buttonfunc_na():
 
     global order
     global coordinate_to_send
-    if order < 19:
+    if order < 21:
         order+=1
         coordinate_to_send.append(None)
 
-        if order != 19:
+        if order != 21:
             plt.at(4).show(Picture(f"result_text/{position_list[order - 1]}.png"),axes=0,zoom=2.2)
     random_start()
 
@@ -130,7 +132,7 @@ def buttonfunc_next():
     """        
     global order
     global coordinate_to_send
-    if order < 19:
+    if order < 21:
         pos = plt.at(2).camera.GetPosition()
         foc = plt.at(2).camera.GetFocalPoint()
         
@@ -147,7 +149,7 @@ def buttonfunc_next():
         coordinate_to_send.append((loc[2] - center[2], loc[0] - center[0], loc[1] - center[1], math.asin(sin_rad_alpha), math.asin(sin_rad_beta), order, ct_name, operator, case_name))
 
         order+=1
-        if order != 19:
+        if order != 21:
             plt.at(4).show(Picture(f"result_text/{position_list[order - 1]}.png"),axes=0,zoom=2.2)
         random_start()
     
@@ -162,7 +164,7 @@ def buttonfunc_finish():
     global order 
     global coordinate_to_send
     print(order)
-    if order == 19:
+    if order == 21:
         for coordinate_order in coordinate_to_send:
             if coordinate_order is not None:
                 rest_api_write.send_post(*coordinate_order)
@@ -226,8 +228,15 @@ def func(evt):
 settings.renderer_frame_width = 1
 settings.enable_default_keyboard_callbacks = False
 
-ct = Volume(ct_name)
+ct = Volume(ct_name, mapper="gpu")
 
+ct.cmap("rainbow").alpha([0, 0, 0, 0.1, 0.2, 0.3, 0.4, 0.8, 1])
+vol_arr = ct.tonumpy()
+
+vol_arrc = np.zeros_like(vol_arr, dtype=np.uint8)
+vol_arrc[(vol_arr > 123) & (vol_arr < 3000)] = 1
+ct.mask(vol_arrc)
+# substitute scalarbar3d to a 2d scalarbar
 # get the demension/shape of the ct scans
 x0, x1, y0, y1, z0, z1 = ct.bounds()
 

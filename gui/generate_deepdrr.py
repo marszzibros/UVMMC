@@ -8,6 +8,7 @@ from deepdrr.projector import Projector
 import numpy as np
 from skimage import exposure
 import matplotlib.pyplot as plt
+import cv2
 
 class Generate:
     def __init__(self, file, path = "projector.png"):
@@ -55,7 +56,10 @@ class Generate:
         """
 
         # define the simulated C-arm
-        carm = deepdrr.MobileCArm(self.patient.center_in_world + geo.v(float(x) ,-float(y),-float(z) * 1.5), 
+        lower, top = self.patient.get_bounding_box_in_world()
+        carm = deepdrr.MobileCArm(geo.Point3D(((top[0] + lower[0]) / 2,
+                                       (top[1] + lower[1]) / 2,
+                                       (top[2] + lower[2]) / 2, 1)) + geo.v(float(x) ,-float(y),-float(z) * 1.5), 
                                 alpha=-np.rad2deg(float(a)),
                                 beta=-np.rad2deg(float(b)))
 
@@ -88,6 +92,62 @@ class Generate:
         # Draw a circle in the middle
         image_with_cross[dist <= cross_size // 2] = 1
         plt.imsave('projector.png', image_with_cross, cmap='gray')
+
+
+    def deepdrr_regenerate(self, x, y, z, a, b):
+        """
+        deepdrr_run
+        
+        Descriptions
+        --------------------------------
+        generate simulated x-ray image using Deep DRR
+
+        Args
+        --------------------------------
+        x: float
+            x coordinate value from center of the volume
+        y: float
+            y coordinate value from center of the volume
+        z: float
+            z coordinate value from center of the volume
+        a: float
+            alpha value in radient
+        b: float
+            beta value in radient
+
+        """
+
+        # define the simulated C-arm
+        lower, top = self.patient.get_bounding_box_in_world()
+        carm = deepdrr.MobileCArm(geo.Point3D(((top[0] + lower[0]) / 2,
+                                       (top[1] + lower[1]) / 2,
+                                       (top[2] + lower[2]) / 2, 1)) + geo.v(float(x) ,-float(y),-float(z) * 1.5), 
+                                alpha=-np.rad2deg(float(a)),
+                                beta=-np.rad2deg(float(b)))
+
+        # project in the AP view
+        with Projector(self.patient, 
+                       carm=carm, 
+                       spectrum="60KV_AL35", 
+                       attenuate_outside_volume=True, 
+                       photon_count=50000,
+                       ) as projector:
+
+            image = projector()
+        
+
+        equalized_image = exposure.equalize_adapthist(image/np.max(image))
+        plt.imsave(self.path, equalized_image, cmap='gray')
+        image = cv2.imread(self.path, cv2.IMREAD_GRAYSCALE)
+        
+        # Apply Adaptive Histogram Equalization
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(4, 4))
+
+        image = clahe.apply(image)
+
+
+        # Save the result
+        cv2.imwrite(self.path, image)
 
     def empty_file(self):
         """

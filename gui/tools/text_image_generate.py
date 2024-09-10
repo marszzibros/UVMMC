@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 
-width = 768
+width = 800
 height = 400
 
 
@@ -15,11 +15,13 @@ position_list = ["skull",
                  "left_wrist", 
                  "T1", 
                  "carina", 
+                 "right_hemidiaphragm",
+                 "left_hemidiaphragm",
                  "T12", 
                  "L5", 
                  "right_iliac_crest", 
                  "left_iliac_crest",
-                 "public_symphysis",
+                 "pubic_symphysis",
                  "right_femoral_head",
                  "left_femoral_head"]
 
@@ -34,6 +36,8 @@ position_specific_list = ["centered on the nasal septum at the level of the infe
                           "centered on the distal radius, styloid process",
                           "centered on T1 vertebral body",
                           "centered at the carina",
+                          "centered at the peak of the right hemidiaphragm",
+                          "centered at the peak of the left hemidiaphragm",
                           "centered on T12 vertebral body",
                           "centered on the L5 vertebral body",
                           "centered at the top of the iliac crest",
@@ -43,6 +47,7 @@ position_specific_list = ["centered on the nasal septum at the level of the infe
                           "centered on the femoral head"]
 
 font = ImageFont.load_default(size=20)
+image_size = (200, 200)  # Adjust image size as needed
 
 
 
@@ -57,6 +62,20 @@ for position, specific in zip(position_list, position_specific_list):
     imgDraw.text((10, 110), "2. Nevigate to the", font=font, fill=(0, 0, 0))
     imgDraw.text((180, 110), f"{position}", font=font, fill=(255, 0, 0))
     imgDraw.text((10, 135), f"{specific}", font=font, fill=(255, 0, 0))
+
+    # Load and resize image (handle potential errors)
+    try:
+        image = Image.open(f"directions/{position}.png")
+        image = image.resize(image_size, Image.Resampling.LANCZOS)
+    except FileNotFoundError:
+        print(f"directions/{position}.png")
+        continue 
+
+    # Calculate image placement coordinates
+    image_x = width - image_size[0] - 10  # Place image 10 pixels from right edge
+    image_y = (height - image_size[1]) // 2  # Center image vertically
+    # Paste image and draw text
+    img.paste(image, (image_x, image_y))
 
     imgDraw.text((10, 185), "3. Fine-tuning can be done by clicking on generated xray image", font=font, fill=(0, 0, 0))
 
